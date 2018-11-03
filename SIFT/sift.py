@@ -33,7 +33,6 @@ class SIFT:
         m2_padded = SIFT.pad_zeros(m2, padsize)
         m2_convolved = np.zeros(shape=m2.shape)
 
-        print(m1.shape, m2.shape, m2_padded.shape)
         for i in range(m2.shape[0]):
             for j in range(m2.shape[1]):
                 xstart = i + m1.shape[0]//2
@@ -43,7 +42,7 @@ class SIFT:
         return m2_convolved
 
     @staticmethod
-    # Pad with zeros
+    # pad array with zeros
     def pad_zeros(a, size=1):
         def pad_with(vector, pad_width, iaxis, kwargs):
             vector[:pad_width[0]] = 0
@@ -67,17 +66,17 @@ class SIFT:
         self.image_original_array = np.asarray(self.image_original, dtype="uint32")
         self.image_grayscale_array = np.asarray(self.image_grayscale, dtype="uint32")
 
+    # obtain SIFT descriptors - the actual algorithm
     def detect(self):
         # Scale-space Extrema Detection - Difference of Gaussians
-        m1 = self.convolve(SIFT.gaussian_blur_matrix(1), self.image_grayscale_array)
+        m1 = self.convolve(SIFT.gaussian_blur_matrix(3.2), self.image_grayscale_array)
         m2 = self.convolve(SIFT.gaussian_blur_matrix(2), self.image_grayscale_array)
 
-        return m1
+        return np.abs(np.abs(m1 - m2) - 255)
 
     # applies the gaussian blur of specified scale to the grayscale image
     def apply_blur(self, scale=1):
         return self.convolve(SIFT.gaussian_blur_matrix(scale), self.image_grayscale_array)
-
 
     # get the PIL Image object tied to the original image
     def get_original(self):
@@ -87,6 +86,7 @@ class SIFT:
     def show_original(self):
         self.image_original.show()
 
+    # show the grayscale image
     def show_grayscale(self):
         self.image_grayscale.show()
 
@@ -104,4 +104,4 @@ if __name__ == "__main__":
     print(SIFT_sample.image_grayscale_array)
 
     SIFT_sample.show_grayscale()
-    SIFT_sample.display_array(SIFT_sample.apply_blur(2))
+    SIFT_sample.display_array(SIFT_sample.detect())
