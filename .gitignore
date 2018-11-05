@@ -1,0 +1,12 @@
+*
+!*/
+!.gitignore
+
+# CV Class
+!cv.py
+
+# SIFT Class
+!SIFT/sift.py
+!SIFT/sift_test.py
+
+
