@@ -39,7 +39,7 @@ class CV:
     # 2D convolution of m2 with m1
     def convolve(m1, m2):
         padsize = max(m1.shape[0], m1.shape[1])
-        m2_padded = SIFT.pad_zeros(m2, padsize)
+        m2_padded = SIFT.pad_value(m2, 128, padsize)
         m2_convolved = np.zeros(shape=m2.shape)
 
         for i in range(m2.shape[0]):
@@ -51,11 +51,11 @@ class CV:
         return m2_convolved
 
     @staticmethod
-    # pad array with zeros
-    def pad_zeros(a, size=1):
+    # pad array with value
+    def pad_value(a, value=0, size=1):
         def pad_with(vector, pad_width, iaxis, kwargs):
-            vector[:pad_width[0]] = 0
-            vector[-pad_width[1]:] = 0
+            vector[:pad_width[0]] = value
+            vector[-pad_width[1]:] = value
             return vector
 
         return np.pad(a, size, pad_with)
@@ -75,6 +75,12 @@ class CV:
     # applies a Sobel derivative mask to the 2D image array
     def apply_derivative(imgarray):
         return np.array([CV.convolve(CV.sobel_matrix()[0], imgarray), CV.convolve(CV.sobel_matrix()[1], imgarray)])
+
+    @staticmethod
+    # rescales an array values in the range [0, 255], to obtain a grayscale representation of the image.
+    # the array minimum gets mapped to 0 (black), and the maximum gets mapped to 255 (white).
+    def rescale_array(a):
+        return 255 * (a - np.min(a)) / (np.max(a) - np.min(a))
 
     # open a image file, associate PIL objects, and get array representations
     def open_file(self, image_path):
@@ -109,7 +115,7 @@ class SIFT(CV):
         return self.image_marked
 
     # obtain SIFT descriptors - the actual SIFT algorithm
-    def detect(self, start_scale=1, octave_size=5):
+    def detect(self, start_scale=2, octave_size=5):
         # 1. Scale-space Extrema Detection
         # Difference of Gaussians Pyramid
         prev_gaussian = CV.apply_blur(self.image_grayscale_array, start_scale)
@@ -147,11 +153,10 @@ class SIFT(CV):
                                                 dog_matrix_above[i + 1][j - 1], dog_matrix_above[i + 1][j], dog_matrix_above[i + 1][j + 1]])
 
                     # check if dog_matrix[i][j] is an extrema!
-                    if dog_matrix[i][j] > max(neighbour_pixels) or dog_matrix[i][j] < min(neighbour_pixels):
+                    if dog_matrix[i][j] >= max(neighbour_pixels) or dog_matrix[i][j] <= min(neighbour_pixels):
                         extrema_points.append((i, j, dog_index))
 
             return dog_octave, extrema_points
-
 
 if __name__ == "__main__":
     np.set_printoptions(precision=1)
@@ -160,15 +165,22 @@ if __name__ == "__main__":
     SIFT_sample.open_file('mike.jpg')
 
     print(SIFT_sample.image_grayscale_array)
-
-    # deriv = SIFT_sample.apply_derivative(SIFT.apply_blur(SIFT_sample.image_grayscale_array, 2))
-    # SIFT_sample.display_array(deriv[0])
-    # SIFT_sample.display_array(deriv[1])
-    # SIFT_sample.display_array(np.sqrt(np.square(deriv[0]) + np.square(deriv[1])))
+    SIFT_sample.display_array(SIFT_sample.apply_blur(SIFT_sample.image_grayscale_array, scale=1))
+    SIFT_sample.display_array(SIFT_sample.apply_blur(SIFT_sample.image_grayscale_array, scale=2))
+    SIFT_sample.display_array(SIFT_sample.apply_blur(SIFT_sample.image_grayscale_array, scale=4))
+    SIFT_sample.display_array(SIFT_sample.apply_blur(SIFT_sample.image_grayscale_array, scale=8))
+    
+    deriv = SIFT_sample.apply_derivative(SIFT.apply_blur(SIFT_sample.image_grayscale_array, 2))
+    SIFT_sample.display_array(deriv[0])
+    SIFT_sample.display_array(deriv[1])
+    SIFT_sample.display_array(np.sqrt(np.square(deriv[0]) + np.square(deriv[1])))
 
     dog_octave, extrema_points = SIFT_sample.detect()
-    SIFT_sample.display_array(dog_octave[0])
-    SIFT_sample.display_array(dog_octave[1])
-    SIFT_sample.display_array(dog_octave[2])
+    SIFT_sample.display_array(SIFT_sample.rescale_array(dog_octave[0]))
+    SIFT_sample.display_array(SIFT_sample.rescale_array(dog_octave[1]))
+    SIFT_sample.display_array(SIFT_sample.rescale_array(dog_octave[2]))
 
+    print(dog_octave[0])
+    print(dog_octave[1])
     print(extrema_points)
+
