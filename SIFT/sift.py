@@ -78,7 +78,10 @@ class SIFT(CV):
                     if dog_matrix[i][j] > max(neighbour_pixels) or dog_matrix[i][j] < min(neighbour_pixels):
                         extrema_points.append((j, i, dog_index))
 
-        Find derivatives for all scales in octave
+        self.mark_points(extrema_points, dims=(5, 5))
+        self.show_marked()
+
+        # Find derivatives for all scales in octave
         dog_octave_deriv = [SIFT.apply_derivative(dog_image) for dog_image in dog_octave]
         dog_octave_deriv_x = [deriv[0] for deriv in dog_octave_deriv]
         dog_octave_deriv_y = [deriv[1] for deriv in dog_octave_deriv]
@@ -94,7 +97,7 @@ class SIFT(CV):
         # Apply intensity test
         passed_extrema_points = []
         for extrema_point in extrema_points:
-            i, j, index = extrema_point
+            j, i, index = extrema_point
 
             if dog_octave_rescaled[index][i][j] > contrast_threshold * 255:
                 passed_extrema_points.append(extrema_point)
@@ -104,7 +107,7 @@ class SIFT(CV):
         # Apply gradient test - evaluate Hessian at extrema points
         passed_extrema_points = []
         for extrema_point in extrema_points:
-            i, j, index = extrema_point
+            j, i, index = extrema_point
 
             hessian = np.asarray([[dog_octave_doublederiv_xx[index][i][j], dog_octave_doublederiv_xy[index][i][j]],
                                   [dog_octave_doublederiv_xy[index][i][j], dog_octave_doublederiv_yy[index][i][j]]])
@@ -116,5 +119,5 @@ class SIFT(CV):
 
         # Mark keypoints as 10px-by-10px rectangles on image
         self.mark_points(extrema_points, dims=(5, 5))
-
+        self.show_marked()
         return dog_octave, extrema_points
